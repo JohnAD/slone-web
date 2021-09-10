@@ -1,17 +1,14 @@
-# The SLONE Specification
+# SLONE: Serialization of Lists of Ordered Named Elements
 
-The role of SLONE is to enable a text-based document format for machine-to- 
-machine communication (and storage) that is also human readable and trackable
-by line-oriented systems such as `diff` and `git`.
+The role of SLONE is to enable a text-based document format for machine-to-machine communication that is also human readable and trackable by line-oriented systems such as `diff` and `git`.
 
-If you are wanting machine-to-machine communication that is not
-trackable by line-oriented systems, I recommend using JSON rather than SLONE
-as JSON is almost universally supported.
+## ALTERNATIVES
 
-If you are wanting human-to-machine communication, such as a config
-file, I recommend using YAML rather than SLONE. YAML is
-very forgiving whereas SLONE is **VERY** strict. YAML is also mostly 
-line-oriented. It too has more universal support. 
+If you are wanting machine-to-machine communication that is not trackable by line-oriented systems, I recommend using [JSON](https://www.json.org/json-en.html) rather than SLONE as JSON is almost universally supported.
+
+If you are wanting human-to-machine communication, such as a config file, I recommend using [YAML](https://yaml.org/) rather than SLONE. YAML is very forgiving whereas SLONE is **VERY** strict. YAML is also mostly line-oriented. It too has more universal support.
+
+If you are wanting somewhat-line-oriented machine-to-machine communication but are not as concerned with repeatablity or byte-level reproduction, [XML](https://www.w3.org/XML/) is also a fantastic alternative.
 
 ## GOALS
 
@@ -71,7 +68,7 @@ Data is serialized into "entries", where each entry consists of one or more line
 
 All text is in UTF8 format. All UTF8 text should be normalized and composed (NFC).
 
-Each line is terminated by a single NewLine (\n) character. There is no line length limit.
+Each line is terminated by a single NewLine (`\n`) character. There is no line length limit.
 
 The very first line of the document is a descriptor that is not part of the data. The descriptor is `#! SLONE 1.0`, exactly, followed by a NewLine. A document missing this line is in error. The spacing and capitalization is not optional.
 
@@ -88,19 +85,19 @@ The second line of a file may optionally indicate a schema. This is done by pref
 For version 1.0 of SLONE, the "additional text" does not have a specific meaning.
 
 ```slone1.0
-    #! SLONE 1.0
-    #% https://schemaserver.local/api/slone1.0/person-detail.schema
-    "Larry" = (person) {*
-      "main home" = (building) _ {*
-        "mailing address" = (address) {*
-          "street" = (string_array) {*
-            _ = (string) "1234 Main St"
-            _ = (string) "Unit 3"
-          *}
-          "postal code" = (zip_code) "90210"
-        *}
+#! SLONE 1.0
+#% https://schemaserver.local/api/slone1.0/person-detail.schema
+"Larry" = (person) {*
+  "main home" = (building) _ {*
+    "mailing address" = (address) {*
+      "street" = (string_array) {*
+        _ = (string) "1234 Main St"
+        _ = (string) "Unit 3"
       *}
+      "postal code" = (zip_code) "90210"
     *}
+  *}
+*}
 ```
 
 ## ENTRIES
@@ -108,7 +105,7 @@ For version 1.0 of SLONE, the "additional text" does not have a specific meaning
 An entry in a SLONE document is a series of elements of the form:
 
 ```
-     indent name SPACE = SPACE (type) SPACE value
+indent name SPACE = SPACE (type) SPACE value
 ```
 
 Quick details:
@@ -162,18 +159,18 @@ Names do not have to be unique. This is handled in a variety of ways by the prog
 Example:
 
 ```slone1.0
-    #! SLONE 1.0
-    "foo" = _ "bar"
-    {|
-      "A really really really really really really really really really really really r"
-      "eally really really really really really really really really really really real"
-      "ly really really really really really really really really really long name"
-    |} = (int32) "99"
-    _ = (string) "xyz"
-    "target" = (someArray) {*
-      _ = (string) "a"
-      _ = (string) "b"
-    *}
+#! SLONE 1.0
+"foo" = _ "bar"
+{|
+  "A really really really really really really really really really really really r"
+  "eally really really really really really really really really really really real"
+  "ly really really really really really really really really really long name"
+|} = (int32) "99"
+_ = (string) "xyz"
+"target" = (someArray) {*
+  _ = (string) "a"
+  _ = (string) "b"
+*}
 ```
 
 In this example, there are four entries. The first one is named "foo". The second one has a name longer than 80 characters. The third entry has no name.
@@ -203,18 +200,18 @@ Otherwise, the content of the type is string is open. The SLONE specification DO
 Example:
 
 ```slone1.0
-    #! SLONE 1.0
-    "foo" = _ "bar"
-    {|
-      "A really really really really really really really really really really really r"
-      "eally really really really really really really really really really really real"
-      "ly really really really really really really really really really long name"
-    |} = (int32) "99"
-    _ = (string) "xyz"
-    "target" = (someArray) {*
-      _ = (string) "a"
-      _ = (string) "b"
-    *}
+#! SLONE 1.0
+"foo" = _ "bar"
+{|
+  "A really really really really really really really really really really really r"
+  "eally really really really really really really really really really really real"
+  "ly really really really really really really really really really long name"
+|} = (int32) "99"
+_ = (string) "xyz"
+"target" = (someArray) {*
+  _ = (string) "a"
+  _ = (string) "b"
+*}
 ```
 
 In this example, there are four entries. 
@@ -259,21 +256,18 @@ Examples:
 
 SLONE does not support the NUL character code (00). So, `\\0x00` is NOT legitimate.
 
-String Escape Sequence Table
-============================
+#### String Escape Sequence Table
 
-========  =======  ===  ================
-sequence  decimal  hex  description
-========  =======  ===  ================
-\\t       9        09   tab (horizontal)
-\\n       10       0A   new line
-\\v       11       0B   vertical tab
-\\f       12       0C   form feed
-\\r       13       0D   carriage return
-\\e       27       1B   escape
-\\"       34       22   double quote
-\\\\      92       5D   slash
-========  =======  ===  ================
+| sequence | decimal | hex | description |
+| -------- | ------- | --- | ----------- |
+| \\t      | 9       | 09  | tab (horizontal) |
+| \\n      | 10      | 0A  | new line |
+| \\v      | 11      | 0B  | vertical tab |
+| \\f      | 12      | 0C  | form feed |
+| \\r      | 13      | 0D  | carriage return |
+| \\e      | 27      | 1B  | escape |
+| \\"      | 34      | 22  | double quote |
+| \\\\     | 92      | 5D  | slash |
 
 ## LONG STRING ENCODING
 
@@ -297,34 +291,34 @@ If the long string was being used for a name, the entry will continue it the spa
 Example:
 
 ```slone1.0
-    #! SLONE 1.0
-    "short" = _ "abc abc abc abc abc abc abc abc abc abc"
-    "long" = _ {|
-      "A really really really really really really really really really really really r"
-      "eally really really really really really really really really really really real"
-      "ly really really really really really really really really really long value"
-    |}
-    {|
-      "A really really really really really really really really really really really r"
-      "eally really really really really really really really really really really real"
-      "ly really really really really really really really really really long name"
-    |} = _ "foo"
-    "Fire and Ice by Robert Frost" = _ {|
-      "Some say the world will end in fire,\nSome say in ice.\n"
-      "From what I’ve tasted of desire\nI hold with those who favor fire.\n"
-      "But if it had to perish twice,\nI think I know enough of hate\n"
-      "To say that for destruction ice\nIs also great\nAnd would suffice."
-    |}
-    "csv_numbers" = _ {|
-      "10001,10002,10003,10004,10005,10006,10007,"
-      "10008,10009,10010,10011,10012,10013,10014,"
-      "10015,10016,10017,10018,10019,10020,10021,"
-      "10023,10024,10025,10026\n20001,20002,20003,"
-      "20004,20005,20006,20007,20008,20009,20010,"
-      "20011,20012,20013,20014,20015,20016,20017,"
-      "20018,20019,20020,20021,20023,20024,20025,"
-      "20026"
-    |}
+#! SLONE 1.0
+"short" = _ "abc abc abc abc abc abc abc abc abc abc"
+"long" = _ {|
+  "A really really really really really really really really really really really r"
+  "eally really really really really really really really really really really real"
+  "ly really really really really really really really really really long value"
+|}
+{|
+  "A really really really really really really really really really really really r"
+  "eally really really really really really really really really really really real"
+  "ly really really really really really really really really really long name"
+|} = _ "foo"
+"Fire and Ice by Robert Frost" = _ {|
+  "Some say the world will end in fire,\nSome say in ice.\n"
+  "From what I’ve tasted of desire\nI hold with those who favor fire.\n"
+  "But if it had to perish twice,\nI think I know enough of hate\n"
+  "To say that for destruction ice\nIs also great\nAnd would suffice."
+|}
+"csv_numbers" = _ {|
+  "10001,10002,10003,10004,10005,10006,10007,"
+  "10008,10009,10010,10011,10012,10013,10014,"
+  "10015,10016,10017,10018,10019,10020,10021,"
+  "10023,10024,10025,10026\n20001,20002,20003,"
+  "20004,20005,20006,20007,20008,20009,20010,"
+  "20011,20012,20013,20014,20015,20016,20017,"
+  "20018,20019,20020,20021,20023,20024,20025,"
+  "20026"
+|}
 ```
 
 ## SUBDOCUMENTS
@@ -338,18 +332,18 @@ A subdocument is started with a `{*` character sequence. Then each following lin
 Example:
 
 ```slone1.0
-    #! SLONE 1.0
-    "Larry" = (person) {*
-      "main home" = (building) _ {*
-        "mailing address" = (address) {*
-          "street" = (string_array) {*
-            _ = (string) "1234 Main St"
-            _ = (string) "Unit 3"
-          *}
-          "postal code" = (zip_code) "90210"
-        *}
+#! SLONE 1.0
+"Larry" = (person) {*
+  "main home" = (building) _ {*
+    "mailing address" = (address) {*
+      "street" = (string_array) {*
+        _ = (string) "1234 Main St"
+        _ = (string) "Unit 3"
       *}
+      "postal code" = (zip_code) "90210"
     *}
+  *}
+*}
 ```
 
 ## ORDER OF ENTRIES
@@ -357,17 +351,17 @@ Example:
 The order of the entries is **significant**. For example,
 
 ```slone1.0
-    #! SLONE 1.0
-    "name" = (person_name) "John Smith"
-    "age" = (int32) "27"
+#! SLONE 1.0
+"name" = (person_name) "John Smith"
+"age" = (int32) "27"
 ```
 
 is different than
 
 ```slone1.0
-    #! SLONE 1.0
-    "age" = (int32) "27"
-    "name" = (person_name) "John Smith"
+#! SLONE 1.0
+"age" = (int32) "27"
+"name" = (person_name) "John Smith"
 ```
 
 While the documents contain the same data, because the order is different, the SLONE specification considers them to be different documents.
