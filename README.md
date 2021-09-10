@@ -244,17 +244,17 @@ A simple string starts with a double-quote symbol ("). It then continues with ea
 
 A simple string is always fully expressed on one line.
 
-The character codes between 00 and 1F (hex) are otherwise known as "control characters". Strictly speaking they are outside of the unicode character set. But as a practical matter, most if not all unicode libraries accept them. If a control characters code between 01 and 1F (hex) is seen and it does not have a matching element above, encode it in the form of  `\0x??` where `??` is replaced with the two digit hex code.
+The character codes between 01 and 1F (hex) are otherwise known as "control characters". Strictly speaking, they are outside of the unicode character set. But as a practical matter most unicode libraries accept them. SLONE also accepts them. If a control character code is seen, encode it with it's replacement in the _String Excape Sequence Table_ below. If there is no matching entry, then encode it in the form of  `\0x??` where `??` is replaced with the two digit hex code.
 
-Escapement does NOT "add characters". For example, the string "a\tb" is three characters long. The `\\t` sequence counts as one character.
+Escapement does NOT "add characters". For example, the string `a\tb` is three characters long because the `\t` sequence counts as one character.
 
 Examples:
 
-- a form feed character would be encoded as "\\f".
-- an ASCII bell character would be encoded as "\\0x07".
-- the person's name Joe "Smiley" Smith would be encoded as "Joe \\"Smiley\\" Smith"
+- a form feed character would be encoded as `\f`.
+- an ASCII bell character would be encoded as `\0x07`.
+- a person's name such as Joe "Smiley" Smith would be encoded as `Joe \"Smiley\" Smith"`.
 
-SLONE does not support the NUL character code (00). So, `\\0x00` is NOT legitimate.
+SLONE does not support the NUL character code (00). So, `\0x00` is not legitimate.
 
 #### String Escape Sequence Table
 
