@@ -72,15 +72,15 @@ Each line is terminated by a single NewLine (`\n`) character. There is no line l
 
 The very first line of the document is a descriptor that is not part of the data. The descriptor is `#! SLONE 1.0`, exactly, followed by a NewLine. A document missing this line is in error. The spacing and capitalization is not optional.
 
-The word "SLONE" is used to provide an indication that the file contains SLONE content. The "1.0" is for the currently only version possible.
+The word "SLONE" is used to provide an indication that the document contains SLONE content. The "1.0" is for the currently only version possible.
 
 For this specification, the text is a series of "characters" in UTF-8 code point format . So, characters can be 1, 2, or 4 bytes long; depending on the language code page. See published UTF-8 specification for details.
 
-The document ends with NewLine on the last line. There are never any empty lines in the SLONE file.
+The document ends with NewLine on the last line. There are never any empty lines in the SLONE document.
 
 ## SCHEMA REFERENCE
 
-The second line of a file may optionally indicate a schema. This is done by prefixing the line with a `#%` followed by a space and additional text.
+The second line of a document may optionally indicate a schema. This is done by prefixing the line with a `#%` followed by a space and additional text.
 
 For version 1.0 of SLONE, the "additional text" does not have a specific meaning.
 
@@ -120,8 +120,8 @@ Quick details:
 
 General notes:
 
-- An unknown (null) element is indicated by a question mark (`?`). It can only be used with values
-- A not-applicable or never-existant element is indicated by an underscore (`_`). This can be used for names, types, and values.
+- A null (unknown) element is indicated by a question mark (`?`). It can only be used with values
+- A none (not-applicable or never-existant) element is indicated by an underscore (`_`). This can be used for names and types.
 - A simple quoted string starts and ends with a quote symbol (`"`); all on one line.
 - A long quoted string. It starts with symbol pairs `{|` and ends with `|}` on multiple lines.
 - The order of the entries is significant.
