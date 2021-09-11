@@ -4,17 +4,17 @@ The role of SLONE is to enable a text-based document format for machine-to-machi
 
 ## ALTERNATIVES
 
-If you are wanting machine-to-machine communication that is not trackable by line-oriented systems, I recommend using [JSON](https://www.json.org/json-en.html) rather than SLONE as JSON is almost universally supported.
+If you are wanting machine-to-machine communication that does not need to be trackable by line-oriented systems, I recommend using [JSON](https://www.json.org/json-en.html) rather than SLONE as JSON is almost universally supported.
 
-If you are wanting human-to-machine communication, such as a config file, I recommend using [YAML](https://yaml.org/) rather than SLONE. YAML is very forgiving whereas SLONE is **VERY** strict. YAML is also mostly line-oriented. It too has more universal support.
+If you are wanting **human**-to-machine communication, such as a config file, I recommend using [YAML](https://yaml.org/) rather than SLONE. YAML is very forgiving whereas SLONE is **VERY** strict and is frustrating to manually type. YAML is also mostly line-oriented. It too has more universal support.
 
-If you are wanting somewhat-line-oriented machine-to-machine communication but are not as concerned with repeatablity or byte-level reproduction, [XML](https://www.w3.org/XML/) is also a fantastic alternative.
+If you are wanting somewhat-line-oriented machine-to-machine communication but are not as concerned with repeatability or byte-level reproduction, [XML](https://www.w3.org/XML/) is also a fantastic alternative.
 
 ## GOALS
 
 The specific goals of SLONE are:
 
-1. Make It Easy to Tracked Changes At The Line Level
+1. Make It Easy to Track Changes At The Line Level
 
    Utilities such as `diff` and `git` should be able to pinpoint the precise differences between two SLONE documents at a line-by-line level.
    
@@ -35,7 +35,7 @@ The specific goals of SLONE are:
 
    When a string value is stored, it is prefixed with another string representing it's type.
    
-   In general, enable schema management, but don't take part in it.
+   In general, SLONE should enable schema management, but not take part in it.
 
 3. Support Fast Simple Single-Pass Parsing
 
@@ -56,7 +56,7 @@ The specific goals of SLONE are:
    Other than the word "SLONE" itself on the first line, the SLONE specification should only use symbols and whitespace to format the
    content of the document.
 
-   It should work equally well with English, Spanish, Mandarin, Maltese, and ancient Sumerian.
+   It should work equally well with English, Spanish, Mandarin, Arabic, Maltese, and ancient Sumerian.
 
 6. Human Readable, But Not Human Writable
 
@@ -240,11 +240,11 @@ A simple string is less than or equal to 80 characters long.
 
 Please keep in mind that a character is a UTF8 code point, so it can easily be more than 80 _bytes_ long.
 
-A simple string starts with a double-quote symbol ("). It then continues with each unicode character in the string, but inserting substitutions as found in the "String Escape Sequence Table". It then ends with unescaped double-quote symbol (").
+A simple string starts with a double-quote symbol ("). It then continues with each unicode character in the string, but inserting needed substitutions as found in the _String Escape Sequence Table_. It then ends with unescaped double-quote symbol (").
 
 A simple string is always fully expressed on one line.
 
-The character codes between 01 and 1F (hex) are otherwise known as "control characters". Strictly speaking, they are outside of the unicode character set. But as a practical matter most unicode libraries accept them. SLONE also accepts them. If a control character code is seen, encode it with it's replacement in the _String Excape Sequence Table_ below. If there is no matching entry, then encode it in the form of  `\0x??` where `??` is replaced with the two digit hex code.
+The character codes between 01 and 1F (hex) are otherwise known as "control characters". Strictly speaking, they are outside of the unicode character set. But as a practical matter most unicode libraries accept them. SLONE also accepts them. If a control character code is seen, encode it with it's replacement in the _String Escape Sequence Table_ below. If there is no matching entry, then encode it in the form of  `\0x??` where `??` is replaced with the two digit hex code.
 
 Escapement does NOT "add characters". For example, the string `a\tb` is three characters long because the `\t` sequence counts as one character.
 
@@ -252,7 +252,7 @@ Examples:
 
 - a form feed character would be encoded as `\f`.
 - an ASCII bell character would be encoded as `\0x07`.
-- a person's name such as Joe "Smiley" Smith would be encoded as `Joe \"Smiley\" Smith"`.
+- a person's name such as Joe "Smiley" Smith would be encoded as `Joe \"Smiley\" Smith`.
 
 SLONE does not support the NUL character code (00). So, `\0x00` is not legitimate.
 
@@ -269,6 +269,26 @@ SLONE does not support the NUL character code (00). So, `\0x00` is not legitimat
 | \\"      | 34      | 22  | double quote |
 | \\\\     | 92      | 5D  | slash |
 
+## BOTH RTL AND LTR LANGUAGE SUPPORT
+
+A string's characters should be ordered by content rather than display. For example, Arabic is a language shown from right to left. So the phrase "They greeted each other" would be displayed:
+
+<div dir="rtl">
+لقد استقبلوا بعضهم البعض
+</div>
+
+However, it would be encoded as 
+
+- character 0 is ل
+- character 1 is ق
+- character 2 is د
+- character 3 is a space
+
+and so on.
+
+While the English version of the SLONE documention shows most examples in English in a LTR display, that is simply an
+artifact of the display. The SLONE document is neither LTR or RTL. It is simply a series of characters in content order.
+
 ## LONG STRING ENCODING
 
 A long string is more than 80 characters long.
@@ -277,8 +297,7 @@ A long string starts by ending the current line with a `{|` sequence (followed b
 
 1. If the remainder of the string is 40 characters or less, use the entire remainder of the string. Ignore the remaining rules.
 2. If, after the 40th character, there is a new line (`\\n`) sequence found, use every character up to and including the new line sequence. Ignore the remaining rules.
-3. If, after the 40th character, there is a new comma found, use every character up to and including the comma. Ignore the remaining rules.
-4. Use 80 characters of the remaining string.
+3. Use the next 80 characters of the remaining string.
 
 After all of the string has been expressed, start a new line with a `|}` sequence. This indicates the end of the string.
 
@@ -286,7 +305,7 @@ Why is rule #2 and #3 in above? For a long string, is not uncommon for text data
 
 If the long string was being used for a value, the `|}` will sit on it's own line.
 
-If the long string was being used for a name, the entry will continue it the space, equals symbol, etc.
+If the long string was being used for a name, the entry will continue with the space, equals symbol, etc.
 
 Example:
 
@@ -309,15 +328,11 @@ Example:
   "But if it had to perish twice,\nI think I know enough of hate\n"
   "To say that for destruction ice\nIs also great\nAnd would suffice."
 |}
-"csv_numbers" = _ {|
-  "10001,10002,10003,10004,10005,10006,10007,"
-  "10008,10009,10010,10011,10012,10013,10014,"
-  "10015,10016,10017,10018,10019,10020,10021,"
-  "10023,10024,10025,10026\n20001,20002,20003,"
-  "20004,20005,20006,20007,20008,20009,20010,"
-  "20011,20012,20013,20014,20015,20016,20017,"
-  "20018,20019,20020,20021,20023,20024,20025,"
-  "20026"
+"two_lines_of_csv_numbers" = _ {|
+  "10001,10002,10003,10004,10005,10006,10007,10008,10009,10010,10011,10012,10013,10"
+  "014,10015,10016,10017,10018,10019,10020,10021,10023,10024,10025,10026\n"
+  "20001,20002,20003,20004,20005,20006,20007,20008,20009,20010,20011,20012,20013,20"
+  "014,20015,20016,20017,20018,20019,20020,20021,20023,20024,20025,20026"
 |}
 ```
 
@@ -366,7 +381,7 @@ is different than
 
 While the documents contain the same data, because the order is different, the SLONE specification considers them to be different documents.
 
-The SLONE specification does not determine what that order should be. That is a matter to be determined by the applications using the documents.
+The SLONE specification does **not** determine what the order should be. That is a matter to be determined by the application(s) using the documents.
 
 Here are some possiblities:
 
@@ -376,13 +391,15 @@ Here are some possiblities:
 
 3.  The applications could honor the original ordering when reading the documents and endevour to keep that order when writing out any changes. Even then, the rule-set for this would need to be cooperatively agreed to.
 
-# HANDLING NONE VS NULL VS EMPTY IN LIBRARIES
+## HANDLING NONE VS NULL VS EMPTY IN LIBRARIES
 
-Most computer languages do not have a means of identifying null (unknown) vs none (does not exist).
+Most computer languages do not have a way differentiate _null_ (unknown) from _none_ (does not exist).
 
-_One_ of the reasons that SLONE does not support "none" for a value is to make the distinctions less important as that only allows either null or none for each element in an entry. Specifically, "name" and "type" support none (`_`) but not null (`?`). And "value" supports null (`?`) but not none (`_`).
+_One_ of the reasons that SLONE does not support none for a value is to make this limitation less important. That way either null or none, but never both, is allowed for each element in an entry. Specifically, "name" and "type" support none (`_`) but not null (`?`). And "value" supports null (`?`) but not none (`_`).
 
-Pretty much all languages support the concept of "empty". For example, an empty array (`[]`) or an empty integer (`0`).
+(The other reason it is not allowed is to remove a source of ambiguous serialization.)
+
+Pretty much all languages fully support the concept of "empty". For example, in python, an empty array is `[]` and an empty integer is `0`.
 
 ```python
     # test.py
@@ -390,18 +407,16 @@ Pretty much all languages support the concept of "empty". For example, an empty 
     # a possible python example, where python's None keyword is used to
     # represent both null and none depending on context.
     #
-    # none and empty are valid names (keys), but null is not allowed
+    # So, for a name (key), the keyword "None" means none
     #
-    # So, for a name, None == none
+    x[""] = someValue   # empty; the name is an empty string
+    x[None] = someValue # none; there is no name
+    #                   # null is not allowed.
+    #                   # (Philosophically, an "authoritative" unknown name makes no sense anyway.)
     #
-    x[""] = [1, 2, 3]    # empty
-    x[None] = [1, 2, 3]  # none
+    # So, for a value, the keyword "None" means null.
     #
-    # "a" is an empty list, "b" is none (it does not exist), "c" is an unknown list
-    #
-    # So, for a value, None == null
-    #
-    x["a"] = []    # empty
-    del x["b"]     # none (performed by ommission rather than assignment)
-    x["c"] = None  # null
+    x["a"] = ""         # "a" entry is empty; the string has no content
+    del x["b"]          # "b" entry is none; this is performed by ommission rather than assignment
+    x["c"] = None       # "c" entry is null; the string's content is not known.
 ```
