@@ -26,7 +26,7 @@ The specific goals of SLONE are:
 
    * strings (UTF8)
    * unknown (aka null)
-   * none (non-existence)
+   * nothing (non-existence)
    * named lists (albeit the names can be "missing" to make them array-like)
 
    Very specifically, SLONE does not _directly_ support numbers, dates, vectors, etc. except as strings.
@@ -70,6 +70,8 @@ All text is in UTF8 format. All UTF8 text should be normalized and composed (NFC
 
 Each line is terminated by a single NewLine (`\n`) character. There is no line length limit.
 
+## FIRST LINE
+
 The very first line of the document is a descriptor that is not part of the data. The descriptor is `#! SLONE 1.0`, exactly, followed by a NewLine. A document missing this line is in error. The spacing and capitalization is not optional.
 
 The word "SLONE" is used to provide an indication that the document contains SLONE content. The "1.0" is for the currently only version possible.
@@ -78,7 +80,7 @@ For this specification, the text is a series of "characters" in UTF-8 code point
 
 The document ends with NewLine on the last line. There are never any empty lines in the SLONE document.
 
-## SCHEMA REFERENCE
+## OPTIONAL SCHEMA REFERENCE
 
 The second line of a document may optionally indicate a schema. This is done by prefixing the line with a `#%` followed by a space and additional text.
 
@@ -87,17 +89,17 @@ For version 1.0 of SLONE, the "additional text" does not have a specific meaning
 ```slone1.0
 #! SLONE 1.0
 #% https://schemaserver.local/api/slone1.0/person-detail.schema
-"Larry" = (person) {*
-  "main home" = (building) _ {*
-    "mailing address" = (address) {*
-      "street" = (string_array) {*
-        _ = (string) "1234 Main St"
-        _ = (string) "Unit 3"
-      *}
-      "postal code" = (zip_code) "90210"
-    *}
-  *}
-*}
+"Larry" : person = {
+  "main home" : building = {
+    "mailing address" : address = {
+      "street" = {
+        _ = "1234 Main St"
+        _ = "Unit 3"
+      }
+      "postal code" : zip_code = "90210"
+    }
+  }
+}
 ```
 
 ## ENTRIES
@@ -105,25 +107,27 @@ For version 1.0 of SLONE, the "additional text" does not have a specific meaning
 An entry in a SLONE document is a series of elements of the form:
 
 ```
-indent name SPACE = SPACE (type) SPACE value
+INDENT name SPACE (COLON SPACE type) EQUALS value
 ```
+
+If type is nothing, then the "COLON SPACE type" part MUST be ommited.
 
 Quick details:
 
 - A `name` string (or `_`) is a reference name for the data entry.
-- An equals symbol (`=`) used between the name and type of an entry.
-- A `type` string (or `_`) for the data entry describes the value's format.
+- A colon (`:`) followed by `type` for the data entry describes the value's format or structure. If there is no declared type then both the colon and the `type` are not included.
+- An equals symbol (`=`) used before the value of an entry.
 - A `value` for the data entry is the string expression of the content, which can be:
   - A string (simple or long).
   - A `?` to indicate that the value is unknown. In SQL parlance, this is often called a NULL.
-  - A subdocument, indicated started with a `{*` symbol sequence at the start and a `*}` symbol sequence at the end.
+  - A subdocument, indicated started with a `{` symbol sequence at the start and a `}` symbol sequence at the end.
 
 General notes:
 
 - A null (unknown) element is indicated by a question mark (`?`). It can only be used with values
-- A none (not-applicable or never-existant) element is indicated by an underscore (`_`). This can be used for names and types.
-- A simple quoted string starts and ends with a quote symbol (`"`); all on one line.
-- A long quoted string. It starts with symbol pairs `{|` and ends with `|}` on multiple lines.
+- A nothing (not-applicable or never-existant) element is indicated by an underscore (`_`). This can be used for names.
+- A short quoted string starts and ends with a quote symbol (`"`); all on one line.
+- A long quoted string. It starts with a pipe symbol (`|`) and ends with a pipe symble (`|`) on multiple lines.
 - The order of the entries is significant.
 
 Unless the `name` or `value` are multiline, each entry will fit on a single line of text followed by a NewLine character.
@@ -132,11 +136,11 @@ A SPACE is exacly one UTF8 0x20 character.
 
 The `=` EQUALS symbol is the UTF8 0x3D character.
 
-The open and closing parenthesis are the UTF8 0x28 and 0x29 characters respectively.
+The `:` COLON symbol is the UTF8 0x3A character.
 
 ### INDENT
 
-Every line starts with indentation (if any).
+Every line starts with indentation if there is any indentation.
 
 For each level of indent, a pair of spaces is included. Every time a multiline structure is started, the content of that structure is is given an indent that one greater than the current indent level. Once the structure ends, the previous indent level is restored.
 
@@ -161,16 +165,16 @@ Example:
 ```slone1.0
 #! SLONE 1.0
 "foo" = _ "bar"
-{|
+|
   "A really really really really really really really really really really really r"
   "eally really really really really really really really really really really real"
   "ly really really really really really really really really really long name"
-|} = (int32) "99"
-_ = (string) "xyz"
-"target" = (someArray) {*
-  _ = (string) "a"
-  _ = (string) "b"
-*}
+| : int32 = "99"
+_ : string = "xyz"
+"target" : someArray = {
+  _ : string = "a"
+  _ : string = "b"
+}
 ```
 
 In this example, there are four entries. The first one is named "foo". The second one has a name longer than 80 characters. The third entry has no name.
@@ -179,9 +183,7 @@ The fourth entry is named "target" and it's value, in turn, has a pair of entrie
 
 ### ENTRY TYPE
 
-An entry type is a string (and only a string) that represents how the data contained in the entry should be interpreted.
-
-The type string, if specified, is quoted using parenthesis characters.
+An entry type is a string (and only a string) that represents how the data contained in the entry should be interpreted. If included it is preceded by a colon and a space.
 
 The string has a very strict set of limitations to it's content. Specifically:
 
@@ -191,7 +193,7 @@ The string has a very strict set of limitations to it's content. Specifically:
 
 Essentially, it is limited to a short number of visible characters. It is a case-sensitive string.
 
-It can also be no type string. For that, use an underscore (`_`)  with no parenthesis to indicate that.
+There can also be no type string. For that, do not includ anything and do not use the preceding colon character.
 
 The type string MUST NOT be marked as unknown (null) using the `?` character.
 
@@ -201,22 +203,22 @@ Example:
 
 ```slone1.0
 #! SLONE 1.0
-"foo" = _ "bar"
-{|
+"foo" = "bar"
+|
   "A really really really really really really really really really really really r"
   "eally really really really really really really really really really really real"
   "ly really really really really really really really really really long name"
-|} = (int32) "99"
-_ = (string) "xyz"
-"target" = (someArray) {*
-  _ = (string) "a"
-  _ = (string) "b"
-*}
+| : int32 = "99"
+_ : string = "xyz"
+"target" : someArray = {
+  _ : string = "a"
+  _ : string = "b"
+}
 ```
 
 In this example, there are four entries. 
 
-The first does not specify a type.
+The first does not specify a type. Please note that there is no visible colon.
 
 The second has a type of "int32". While this might imply that it is storing a signed 32-bit integer, the specification does not state this. The various programs reading/writing these documents must come to a common agreement independent of the SLONE specification.
 
@@ -230,9 +232,9 @@ An entry value is the data being stored. In can one of the following:
 
 - A string (simple or long).
 - A `?` to indicate that the value is unknown. In SQL parlance, this is often called a NULL.
-- A subdocument, indicated started with a `{*` symbol sequence at the start and a `*}` symbol sequence at the end.
+- A subdocument, indicated started with a `{` symbol sequence at the start and a `}` symbol sequence at the end.
 
-An entry value MUST NOT be none (`_`). If entry does not have value, it should simply be not included in the document.
+An entry value MUST NOT be nothing (`_`). If entry does not have value, it should simply be not included in the document.
 
 ## SIMPLE STRING ENCODING
 
@@ -267,7 +269,7 @@ SLONE does not support the NUL character code (00). So, `\0x00` is not legitimat
 | \\r      | 13      | 0D  | carriage return |
 | \\e      | 27      | 1B  | escape |
 | \\"      | 34      | 22  | double quote |
-| \\\\     | 92      | 5D  | slash |
+| \\\\     | 92      | 5D  | backslash |
 
 ## BOTH RTL AND LTR LANGUAGE SUPPORT
 
@@ -293,17 +295,17 @@ artifact of the display. The SLONE document is neither LTR or RTL. It is simply 
 
 A long string is more than 80 characters long.
 
-A long string starts by ending the current line with a `{|` sequence (followed by the NewLine that ends all lines.) On each following line, a portion of the string is indented on a line by itself as a simple string. The number of characters used is determined by the following ruleset (in order).
+A long string starts by ending the current line with a `|` sequence (followed by the NewLine that ends all lines.) On each following line, a portion of the string is indented on a line by itself as a simple string. The number of characters used is determined by the following ruleset (in order).
 
 1. If the remainder of the string is 40 characters or less, use the entire remainder of the string. Ignore the remaining rules.
 2. If, after the 40th character, there is a new line (`\\n`) sequence found, use every character up to and including the new line sequence. Ignore the remaining rules.
 3. Use the next 80 characters of the remaining string.
 
-After all of the string has been expressed, start a new line with a `|}` sequence. This indicates the end of the string.
+After all of the string has been expressed, start a new line with a `|` sequence. This indicates the end of the string.
 
-Why is rule #2 and #3 in above? For a long string, is not uncommon for text data "items" to be separated by newLines or commas. As such, it would be nice if modifying an item that changes it's length would only trigger a change detection on one or a few SLONE lines rather than the entire remainder of the long string. Rules #2 and #3 make this more likely (though not guaranteed).
+Why is rule #2 and #3 in above? For a long string, is not uncommon for text data "items" to be separated by new lines. As such, it would be nice if modifying an item that changes it's length would only trigger a change detection on one or a few SLONE lines rather than the entire remainder of the long string. Rules #2 and #3 make this more likely (though not guaranteed).
 
-If the long string was being used for a value, the `|}` will sit on it's own line.
+If the long string was being used for a value, a `|` will sit on it's own line at the end.
 
 If the long string was being used for a name, the entry will continue with the space, equals symbol, etc.
 
@@ -311,29 +313,37 @@ Example:
 
 ```slone1.0
 #! SLONE 1.0
-"short" = _ "abc abc abc abc abc abc abc abc abc abc"
-"long" = _ {|
+"short" = "abc abc abc abc abc abc abc abc abc abc"
+"long" = |
   "A really really really really really really really really really really really r"
   "eally really really really really really really really really really really real"
   "ly really really really really really really really really really long value"
-|}
-{|
+|
+|
   "A really really really really really really really really really really really r"
   "eally really really really really really really really really really really real"
   "ly really really really really really really really really really long name"
-|} = _ "foo"
-"Fire and Ice by Robert Frost" = _ {|
+| = "foo"
+"Fire and Ice by Robert Frost" = |
   "Some say the world will end in fire,\nSome say in ice.\n"
   "From what I’ve tasted of desire\nI hold with those who favor fire.\n"
   "But if it had to perish twice,\nI think I know enough of hate\n"
   "To say that for destruction ice\nIs also great\nAnd would suffice."
-|}
-"two_lines_of_csv_numbers" = _ {|
+|
+"two_lines_of_csv_numbers" = |
   "10001,10002,10003,10004,10005,10006,10007,10008,10009,10010,10011,10012,10013,10"
   "014,10015,10016,10017,10018,10019,10020,10021,10023,10024,10025,10026\n"
   "20001,20002,20003,20004,20005,20006,20007,20008,20009,20010,20011,20012,20013,20"
   "014,20015,20016,20017,20018,20019,20020,20021,20023,20024,20025,20026"
-|}
+|
+"a doc" = {
+  "two_lines_of_csv_numbers" = |
+    "10001,10002,10003,10004,10005,10006,10007,10008,10009,10010,10011,10012,10013,10"
+    "014,10015,10016,10017,10018,10019,10020,10021,10023,10024,10025,10026\n"
+    "20001,20002,20003,20004,20005,20006,20007,20008,20009,20010,20011,20012,20013,20"
+    "014,20015,20016,20017,20018,20019,20020,20021,20023,20024,20025,20026"
+  |  
+}
 ```
 
 ## SUBDOCUMENTS
@@ -342,23 +352,23 @@ A value element can be a another document aka a subdocument.
 
 And, the value of an entry in a subdocument can also be a subdocument, and so forth. In other words, SLONE's nature is recursive since subdocuments can subtend subdocuments without limit.
 
-A subdocument is started with a `{*` character sequence. Then each following line indented further and contains the data entries for the subdocument. After the document ends, place `*}` on a line by itself at the restored indentation level.
+A subdocument is started with a `{` character sequence. Then each following line indented further and contains the data entries for the subdocument. After the document ends, place `}` on a line by itself at the restored indentation level.
 
 Example:
 
 ```slone1.0
 #! SLONE 1.0
-"Larry" = (person) {*
-  "main home" = (building) _ {*
-    "mailing address" = (address) {*
-      "street" = (string_array) {*
-        _ = (string) "1234 Main St"
-        _ = (string) "Unit 3"
-      *}
-      "postal code" = (zip_code) "90210"
-    *}
-  *}
-*}
+"Larry" : person = {
+  "main home" : building = {
+    "mailing address" : address = {
+      "street" : string_array =  {
+        _ = "1234 Main St"
+        _ = "Unit 3"
+      }
+      "postal code" : zip_code = "90210"
+    }
+  }
+}
 ```
 
 ## ORDER OF ENTRIES
@@ -367,16 +377,16 @@ The order of the entries is **significant**. For example,
 
 ```slone1.0
 #! SLONE 1.0
-"name" = (person_name) "John Smith"
-"age" = (int32) "27"
+"name" : person_name = "John Smith"
+"age" : int32 = "27"
 ```
 
 is different than
 
 ```slone1.0
 #! SLONE 1.0
-"age" = (int32) "27"
-"name" = (person_name) "John Smith"
+"age" : int32 = "27"
+"name" : person_name = "John Smith"
 ```
 
 While the documents contain the same data, because the order is different, the SLONE specification considers them to be different documents.
@@ -391,11 +401,11 @@ Here are some possiblities:
 
 3.  The applications could honor the original ordering when reading the documents and endevour to keep that order when writing out any changes. Even then, the rule-set for this would need to be cooperatively agreed to.
 
-## HANDLING NONE VS NULL VS EMPTY IN LIBRARIES
+## HANDLING NOTHING VS NULL VS EMPTY IN LIBRARIES
 
-Most computer languages do not have a way differentiate _null_ (unknown) from _none_ (does not exist).
+Most computer languages do not have a core way to differentiate _null_ (unknown) from _nothing_ (does not exist).
 
-_One_ of the reasons that SLONE does not support none for a value is to make this limitation less important. That way either null or none, but never both, is allowed for each element in an entry. Specifically, "name" and "type" support none (`_`) but not null (`?`). And "value" supports null (`?`) but not none (`_`).
+_One_ of the reasons that SLONE does not support nothing for a value is to make this limitation less important. That way either null or nothing, but never both, is allowed for each element in an entry. Specifically, "name" and "type" support nothing (`_` for "name", ommission for "type") but not null (`?`). And "value" supports null (`?`) but not nothing (`_`).
 
 (The other reason it is not allowed is to remove a source of ambiguous serialization.)
 
@@ -405,18 +415,18 @@ Pretty much all languages fully support the concept of "empty". For example, in 
     # test.py
     #
     # a possible python example, where python's None keyword is used to
-    # represent both null and none depending on context.
+    # represent both null and nothing depending on context.
     #
-    # So, for a name (key), the keyword "None" means none
+    # So, for a name (key), the keyword "None" means nothing
     #
     x[""] = someValue   # empty; the name is an empty string
-    x[None] = someValue # none; there is no name
+    x[None] = someValue # nothing; there is no name
     #                   # null is not allowed.
     #                   # (Philosophically, an "authoritative" unknown name makes no sense anyway.)
     #
     # So, for a value, the keyword "None" means null.
     #
     x["a"] = ""         # "a" entry is empty; the string has no content
-    del x["b"]          # "b" entry is none; this is performed by ommission rather than assignment
+    del x["b"]          # "b" entry is nothing; this is performed by ommission rather than assignment
     x["c"] = None       # "c" entry is null; the string's content is not known.
 ```
